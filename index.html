@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Tableau de Bord d'Inventaire</title>
     <link rel="stylesheet" href="inventaire.css">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <header>
@@ -11,6 +12,9 @@
     </header>
 
     <main class="container">
+        <div id="entreprise-info">
+            </div>
+
         <div class="form-section">
             <h2>Ajouter un Produit</h2>
             <form id="add-product-form">
@@ -21,23 +25,32 @@
             </form>
         </div>
 
+        <div class="filter-section">
+            <input type="text" id="search-input" placeholder="Rechercher un produit par nom...">
+            <select id="filter-status">
+                <option value="all">Filtrer par statut (Tous)</option>
+                <option value="ok">Stock OK</option>
+                <option value="low">Stock Bas</option>
+                <option value="urgent">Rupture</option>
+            </select>
+        </div>
+
         <div class="table-section">
             <h2>Inventaire Actuel</h2>
             <table id="inventory-table">
                 <thead>
                     <tr>
-                        <th>Nom du Produit</th>
-                        <th>Catégorie</th>
-                        <th>Stock Actuel</th>
+                        <th class="sortable">Nom du Produit ↕</th>
+                        <th class="sortable">Catégorie ↕</th>
+                        <th class="sortable">Stock Actuel ↕</th>
                         <th>Statut</th>
-                        <th>Actions</th> </tr>
+                        <th>Actions</th> 
+                    </tr>
                 </thead>
                 <tbody>
                     </tbody>
             </table>
         </div>
-        
-        <div id="entreprise-info"></div>
     </main>
 
     <footer>
