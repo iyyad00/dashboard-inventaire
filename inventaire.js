@@ -1,11 +1,13 @@
 // ====================================================================
 // SECTION 1: GESTION DES DONNÉES ET ESPACE DE STOCKAGE DÉSIGNÉ (Local)
+// (Mot de passe retiré pour des raisons de sécurité GitHub)
 // ====================================================================
 
-// Liste des codes d'entreprise, email et mots de passe par défaut
+// Liste des codes d'entreprise et emails.
+// La clé "valide: true" simule l'authentification réussie par un service externe (ex: Google).
 let USERS_AUTORISES_DEFAUT = {
-    "ENTR001": { motDePasse: "secret123", nom: "Société Alpha", email: "alpha@entreprise.ma" },
-    "ENTR002": { motDePasse: "pass456", nom: "Atelier Beta", email: "beta@atelier.com" }
+    "ENTR001": { valide: true, nom: "Société Alpha", email: "alpha.test@entreprise.ma" },
+    "ENTR002": { valide: true, nom: "Atelier Beta", email: "beta.test@atelier.com" }
 };
 
 let USERS_AUTORISES = {};
@@ -87,6 +89,7 @@ function deconnexion() {
 
 // ====================================================================
 // SECTION 3: LOGIQUE DE LA PAGE DE CONNEXION (login.html)
+// --- Vérifie seulement le CODE d'entreprise ---
 // ====================================================================
 
 function gererConnexion(event) {
@@ -95,20 +98,19 @@ function gererConnexion(event) {
     event.preventDefault();
 
     const codeInput = document.getElementById('code_entreprise');
-    const passInput = document.getElementById('mot_de_passe');
     const erreurMsg = document.getElementById('message-erreur');
 
     const code = codeInput.value;
-    const motDePasse = passInput.value;
 
-    if (USERS_AUTORISES[code] && USERS_AUTORISES[code].motDePasse === motDePasse) {
+    // La connexion vérifie seulement si le code existe dans notre liste et est valide
+    if (USERS_AUTORISES[code] && USERS_AUTORISES[code].valide === true) {
         localStorage.setItem('entrepriseCode', code);
         window.location.href = 'index.html';
         return;
     }
 
+    // Affiche l'erreur si le code n'est pas reconnu
     erreurMsg.style.visibility = 'visible';
-    passInput.value = '';
 }
 
 const loginForm = document.getElementById('login-form');
@@ -123,8 +125,6 @@ if (loginForm) {
 
 /**
  * Calcule la classe et le texte du statut en fonction du stock.
- * @param {number} stock 
- * @returns {object} { statutClass, statutText, statutValue }
  */
 function getStatut(stock) {
     if (stock <= 0) {
@@ -136,18 +136,16 @@ function getStatut(stock) {
     }
 }
 
-// Nouvelle fonction pour gérer le tri du tableau
+// Fonction pour gérer le tri du tableau
 function trierTableau(colIndex) {
     const inventaire = JSON.parse(localStorage.getItem('inventaire')) || [];
 
-    // Déterminer la clé de tri en fonction de la colonne
     let sortKey;
     if (colIndex === 0) sortKey = 'nom';
     else if (colIndex === 1) sortKey = 'categorie';
     else if (colIndex === 2) sortKey = 'stock';
-    else return; // Pas de tri pour cette colonne
+    else return;
 
-    // Logique de tri
     inventaire.sort((a, b) => {
         let valA = a[sortKey];
         let valB = b[sortKey];
@@ -159,15 +157,13 @@ function trierTableau(colIndex) {
         }
     });
 
-    // Inverse la direction pour le prochain clic
     sortDirection = -sortDirection; 
 
-    // Mettre à jour le LocalStorage (optionnel) et afficher
     localStorage.setItem('inventaire', JSON.stringify(inventaire));
     afficherInventaire();
 }
 
-// Fonction principale d'affichage (modifiée pour intégrer le filtrage)
+// Fonction principale d'affichage (intègre le filtrage)
 function afficherInventaire() {
     const tableBody = document.querySelector('#inventory-table tbody');
     tableBody.innerHTML = '';
@@ -181,7 +177,7 @@ function afficherInventaire() {
     const inventaireFiltre = inventaire.filter(produit => {
         const matchesSearch = produit.nom.toLowerCase().includes(searchTerm);
         
-        const statut = getStatut(produit.stock).statutClass.replace('status-', ''); // ok, low, urgent
+        const statut = getStatut(produit.stock).statutClass.replace('status-', '');
         const matchesStatus = filterStatus === 'all' || filterStatus === statut;
 
         return matchesSearch && matchesStatus;
@@ -277,12 +273,8 @@ document.getElementById('filter-status')?.addEventListener('change', afficherInv
 const tableHeader = document.querySelector('#inventory-table thead tr');
 if (tableHeader) {
     tableHeader.querySelectorAll('th').forEach((th, index) => {
-        // Ajouter un style de curseur pour indiquer que c'est triable
         if (index < 3) { // Tri sur Nom, Catégorie, Stock
-            th.style.cursor = 'pointer';
             th.addEventListener('click', () => trierTableau(index));
         }
     });
 }
-// Lancer la vérification de l'accès au chargement de la page
-window.addEventListener('load', verifierAcces);
