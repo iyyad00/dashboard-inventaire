@@ -3,8 +3,7 @@
 // (Mot de passe retiré pour des raisons de sécurité GitHub)
 // ====================================================================
 
-// Liste des codes d'entreprise et emails.
-// La clé "valide: true" simule l'authentification réussie par un service externe (ex: Google).
+// Liste des codes d'entreprise et emails de test. La clé "valide: true" simule l'authentification.
 let USERS_AUTORISES_DEFAUT = {
     "ENTR001": { valide: true, nom: "Société Alpha", email: "alpha.test@entreprise.ma" },
     "ENTR002": { valide: true, nom: "Atelier Beta", email: "beta.test@atelier.com" }
