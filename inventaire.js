@@ -1,24 +1,75 @@
 // ====================================================================
-// 1. GESTION DES DONNÉES DE DÉPART (Simulacre de base de données)
-// Ajout de l'email pour chaque entreprise
+// SECTION 1: GESTION DES DONNÉES ET ESPACE DE STOCKAGE DÉSIGNÉ (Local)
+//
+// ATTENTION: Les données sont stockées sur l'appareil de l'utilisateur (localStorage).
+// C'est l'espace de stockage idéal pour ce projet de portfolio statique.
+// Pour un usage commercial réel (sécurité contre le piratage), il faudrait un
+// serveur externe et une base de données.
+// ====================================================================
+
+// Liste des codes d'entreprise, email et mots de passe autorisés
 const USERS_AUTORISES = {
     "ENTR001": { motDePasse: "secret123", nom: "Société Alpha", email: "alpha@entreprise.ma" },
     "ENTR002": { motDePasse: "pass456", nom: "Atelier Beta", email: "beta@atelier.com" }
 };
 
-// Initialisation de l'inventaire dans le LocalStorage (si vide)
-if (!localStorage.getItem('inventaire')) {
-    const inventaireInitial = [
-        { id: 1, nom: "Clavier Mécanique", categorie: "Bureau", stock: 25 },
-        { id: 2, nom: "Lampe LED", categorie: "Éclairage", stock: 3 },
-        { id: 3, nom: "Cartouche d'encre", categorie: "Consommable", stock: 0 }
-    ];
-    localStorage.setItem('inventaire', JSON.stringify(inventaireInitial));
-}
 let nextId = 4; // ID pour les nouveaux produits
 
+// Fonction pour initialiser l'inventaire dans le LocalStorage (si vide)
+function initialiserStockage() {
+    if (!localStorage.getItem('inventaire')) {
+        const inventaireInitial = [
+            { id: 1, nom: "Clavier Mécanique", categorie: "Bureau", stock: 25 },
+            { id: 2, nom: "Lampe LED", categorie: "Éclairage", stock: 3 },
+            { id: 3, nom: "Cartouche d'encre", categorie: "Consommable", stock: 0 }
+        ];
+        localStorage.setItem('inventaire', JSON.stringify(inventaireInitial));
+    }
+}
+initialiserStockage(); // Exécuter l'initialisation dès le début du script
+
 // ====================================================================
-// 2. LOGIQUE DE CONNEXION (login.html)
+// SECTION 2: CONTRÔLE D'ACCÈS ET AFFICHAGE (Vérifie la connexion en premier)
+// ====================================================================
+
+// Fonction pour vérifier la connexion et rediriger si l'accès est refusé
+function verifierAcces() {
+    // Si la page n'est pas censée afficher l'inventaire, on arrête
+    if (!document.getElementById('inventory-table')) return;
+    
+    const code = localStorage.getItem('entrepriseCode');
+    
+    // Si l'utilisateur n'est pas connecté, le renvoyer à la page de connexion
+    if (!code || !USERS_AUTORISES[code]) {
+        window.location.href = 'login.html';
+        return;
+    }
+    
+    // Si l'accès est vérifié, afficher les infos et l'inventaire
+    afficherInfoEntreprise(code);
+    afficherInventaire();
+}
+
+function afficherInfoEntreprise(code) {
+    const infoDiv = document.getElementById('entreprise-info');
+    const user = USERS_AUTORISES[code];
+    // Affichage des informations demandées
+    infoDiv.innerHTML = `<div class="info-box">
+                         <h3>Entreprise Connectée : ${user.nom}</h3>
+                         <p>Code d'Entreprise : <strong>${code}</strong></p>
+                         <p>Email de Contact : <strong>${user.email}</strong></p>
+                         <button onclick="deconnexion()">Déconnexion</button>
+                         </div>`;
+}
+
+function deconnexion() {
+    localStorage.removeItem('entrepriseCode');
+    window.location.href = 'login.html';
+}
+
+
+// ====================================================================
+// SECTION 3: LOGIQUE DE LA PAGE DE CONNEXION (login.html)
 // ====================================================================
 
 function gererConnexion(event) {
@@ -50,36 +101,9 @@ if (loginForm) {
 
 
 // ====================================================================
-// 3. LOGIQUE DU TABLEAU DE BORD (index.html)
+// SECTION 4: GESTION DU TABLEAU ET DES ACTIONS (index.html)
+// (Ajouter, Modifier, Supprimer)
 // ====================================================================
-
-function verifierAcces() {
-    if (!document.getElementById('inventory-table')) return;
-    
-    const code = localStorage.getItem('entrepriseCode');
-    
-    if (!code || !USERS_AUTORISES[code]) {
-        window.location.href = 'login.html';
-        return;
-    }
-    
-    afficherInfoEntreprise(code); // Afficher le nom et l'email de l'entreprise
-    afficherInventaire();
-}
-
-function afficherInfoEntreprise(code) {
-    const infoDiv = document.getElementById('entreprise-info');
-    const user = USERS_AUTORISES[code];
-    infoDiv.innerHTML = `<h3>Bienvenue, ${user.nom}</h3>
-                         <p>Code d'accès : <strong>${code}</strong></p>
-                         <p>Email de contact : <strong>${user.email}</strong></p>
-                         <button onclick="deconnexion()">Déconnexion</button>`;
-}
-
-function deconnexion() {
-    localStorage.removeItem('entrepriseCode');
-    window.location.href = 'login.html';
-}
 
 function afficherInventaire() {
     const tableBody = document.querySelector('#inventory-table tbody');
@@ -87,16 +111,14 @@ function afficherInventaire() {
 
     const inventaire = JSON.parse(localStorage.getItem('inventaire')) || [];
     if (inventaire.length > 0) {
-        // Mettre à jour nextId pour éviter les doublons
         nextId = Math.max(...inventaire.map(p => p.id)) + 1;
     }
 
 
     inventaire.forEach(produit => {
         const row = tableBody.insertRow();
-        row.setAttribute('data-id', produit.id); // Lier la ligne à l'ID du produit
+        row.setAttribute('data-id', produit.id); 
         
-        // Calcul du Statut
         let statutClass = '';
         let statutText = '';
         if (produit.stock <= 0) {
@@ -117,7 +139,6 @@ function afficherInventaire() {
         const statutCell = row.insertCell();
         statutCell.innerHTML = `<span class="${statutClass}">${statutText}</span>`;
         
-        // Colonne d'Actions
         const actionsCell = row.insertCell();
         actionsCell.innerHTML = `<button onclick="modifierProduit(${produit.id})">Modifier</button>
                                  <button onclick="supprimerProduit(${produit.id})" class="delete-btn">Supprimer</button>`;
@@ -144,7 +165,6 @@ function ajouterProduit(event) {
     }
 }
 
-// Nouvelle fonction: Modifier un produit (via une boîte de dialogue simple)
 function modifierProduit(id) {
     let inventaire = JSON.parse(localStorage.getItem('inventaire')) || [];
     const produitIndex = inventaire.findIndex(p => p.id === id);
@@ -161,7 +181,6 @@ function modifierProduit(id) {
     }
 }
 
-// Nouvelle fonction: Supprimer un produit
 function supprimerProduit(id) {
     if (confirm("Êtes-vous sûr de vouloir supprimer ce produit de l'inventaire ?")) {
         let inventaire = JSON.parse(localStorage.getItem('inventaire')) || [];
@@ -172,18 +191,16 @@ function supprimerProduit(id) {
     }
 }
 
+// ====================================================================
+// SECTION 5: INITIALISATION DES ÉCOUTEURS D'ÉVÉNEMENTS
+// ====================================================================
 
-// Ajout des écouteurs d'événements pour le tableau de bord (si présent)
 const addProductForm = document.getElementById('add-product-form');
 if (addProductForm) {
     addProductForm.addEventListener('submit', ajouterProduit);
-    window.addEventListener('load', verifierAcces); 
-} else {
-    // Si ce n'est pas index.html, nous devons quand même vérifier la connexion au chargement (pour login.html)
-    window.addEventListener('load', verifierAcces); 
 }
 
-// Si la page est index.html, on veut juste lancer la vérification et l'affichage (login.html fera la redirection)
-if (document.getElementById('inventory-table')) {
+// Lancer la vérification de l'accès au chargement de la page
+if (document.getElementById('inventory-table') || document.getElementById('login-form')) {
     window.addEventListener('load', verifierAcces);
 }
