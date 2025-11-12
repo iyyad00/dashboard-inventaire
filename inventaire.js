@@ -2,17 +2,19 @@
 // SECTION 1: GESTION DES DONNÉES ET ESPACE DE STOCKAGE DÉSIGNÉ (Local)
 // ====================================================================
 
-// Liste des codes d'entreprise, email et mots de passe autorisés
-let USERS_AUTORISES = { // Utilisez 'let' car cette variable sera mise à jour
+// Liste des codes d'entreprise, email et mots de passe par défaut
+let USERS_AUTORISES_DEFAUT = {
     "ENTR001": { motDePasse: "secret123", nom: "Société Alpha", email: "alpha@entreprise.ma" },
     "ENTR002": { motDePasse: "pass456", nom: "Atelier Beta", email: "beta@atelier.com" }
 };
 
+let USERS_AUTORISES = {};
 let nextId = 4;
+let sortDirection = 1; // 1 pour ASC (croissant), -1 pour DESC (décroissant)
 
 // Fonction pour initialiser l'inventaire et les utilisateurs
 function initialiserStockage() {
-    // 1. Initialiser l'inventaire
+    // 1. Initialiser l'inventaire (produits)
     if (!localStorage.getItem('inventaire')) {
         const inventaireInitial = [
             { id: 1, nom: "Clavier Mécanique", categorie: "Bureau", stock: 25 },
@@ -22,13 +24,12 @@ function initialiserStockage() {
         localStorage.setItem('inventaire', JSON.stringify(inventaireInitial));
     }
 
-    // 2. Initialiser les utilisateurs (Si des emails ont été modifiés par l'utilisateur)
+    // 2. Initialiser les utilisateurs 
     const storedUsers = localStorage.getItem('users');
     if (storedUsers) {
-        // Si des utilisateurs stockés existent, les fusionner avec la liste par défaut
         USERS_AUTORISES = JSON.parse(storedUsers);
     } else {
-        // Stocker la liste par défaut si elle n'existe pas encore
+        USERS_AUTORISES = USERS_AUTORISES_DEFAUT;
         localStorage.setItem('users', JSON.stringify(USERS_AUTORISES));
     }
 }
@@ -36,15 +37,12 @@ initialiserStockage();
 
 
 // ====================================================================
-// SECTION 2: CONTRÔLE D'ACCÈS ET AFFICHAGE (Vérifie la connexion en premier)
+// SECTION 2: CONTRÔLE D'ACCÈS ET AFFICHAGE DES INFOS (index.html)
 // ====================================================================
 
 function verifierAcces() {
-    if (!document.getElementById('inventory-table') && !document.getElementById('login-form')) return; // Vérification générale
-
     const code = localStorage.getItem('entrepriseCode');
     
-    // Si on est sur la page d'inventaire (index.html)
     if (document.getElementById('inventory-table')) {
         if (!code || !USERS_AUTORISES[code]) {
             window.location.href = 'login.html';
@@ -67,21 +65,15 @@ function afficherInfoEntreprise(code) {
                          </div>`;
 }
 
-// NOUVELLE FONCTION: Permet à l'entreprise connectée de modifier son email
 function modifierEmailEntreprise(code) {
     const user = USERS_AUTORISES[code];
     const nouveauEmail = prompt(`Entrez le nouvel email pour ${user.nom} (Actuel: ${user.email}) :`);
 
     if (nouveauEmail !== null && nouveauEmail.trim() !== "" && nouveauEmail.includes('@')) {
-        // 1. Mettre à jour dans l'objet en mémoire
         USERS_AUTORISES[code].email = nouveauEmail.trim();
-
-        // 2. Mettre à jour dans le stockage local pour persistance
         localStorage.setItem('users', JSON.stringify(USERS_AUTORISES));
-
-        // 3. Mettre à jour l'affichage immédiatement
         afficherInfoEntreprise(code);
-    } else if (nouveauEmail !== null) {
+    } else if (nouveauEmail !== null && nouveauEmail.trim() !== "") {
         alert("Email invalide. Veuillez entrer une adresse email correcte.");
     }
 }
@@ -126,34 +118,86 @@ if (loginForm) {
 
 
 // ====================================================================
-// SECTION 4: GESTION DU TABLEAU ET DES ACTIONS (index.html)
+// SECTION 4: GESTION DU TABLEAU ET DES ACTIONS (CRUD + FILTRE/TRI)
 // ====================================================================
 
+/**
+ * Calcule la classe et le texte du statut en fonction du stock.
+ * @param {number} stock 
+ * @returns {object} { statutClass, statutText, statutValue }
+ */
+function getStatut(stock) {
+    if (stock <= 0) {
+        return { statutClass: 'status-urgent', statutText: 'Rupture', statutValue: 3 };
+    } else if (stock < 10) {
+        return { statutClass: 'status-low', statutText: 'Stock Bas', statutValue: 2 };
+    } else {
+        return { statutClass: 'status-ok', statutText: 'Stock OK', statutValue: 1 };
+    }
+}
+
+// Nouvelle fonction pour gérer le tri du tableau
+function trierTableau(colIndex) {
+    const inventaire = JSON.parse(localStorage.getItem('inventaire')) || [];
+
+    // Déterminer la clé de tri en fonction de la colonne
+    let sortKey;
+    if (colIndex === 0) sortKey = 'nom';
+    else if (colIndex === 1) sortKey = 'categorie';
+    else if (colIndex === 2) sortKey = 'stock';
+    else return; // Pas de tri pour cette colonne
+
+    // Logique de tri
+    inventaire.sort((a, b) => {
+        let valA = a[sortKey];
+        let valB = b[sortKey];
+
+        if (typeof valA === 'string') {
+            return valA.localeCompare(valB) * sortDirection;
+        } else {
+            return (valA - valB) * sortDirection;
+        }
+    });
+
+    // Inverse la direction pour le prochain clic
+    sortDirection = -sortDirection; 
+
+    // Mettre à jour le LocalStorage (optionnel) et afficher
+    localStorage.setItem('inventaire', JSON.stringify(inventaire));
+    afficherInventaire();
+}
+
+// Fonction principale d'affichage (modifiée pour intégrer le filtrage)
 function afficherInventaire() {
     const tableBody = document.querySelector('#inventory-table tbody');
     tableBody.innerHTML = '';
 
-    const inventaire = JSON.parse(localStorage.getItem('inventaire')) || [];
+    const searchTerm = document.getElementById('search-input')?.value.toLowerCase() || '';
+    const filterStatus = document.getElementById('filter-status')?.value || 'all';
+
+    let inventaire = JSON.parse(localStorage.getItem('inventaire')) || [];
+
+    // 1. FILTRAGE
+    const inventaireFiltre = inventaire.filter(produit => {
+        const matchesSearch = produit.nom.toLowerCase().includes(searchTerm);
+        
+        const statut = getStatut(produit.stock).statutClass.replace('status-', ''); // ok, low, urgent
+        const matchesStatus = filterStatus === 'all' || filterStatus === statut;
+
+        return matchesSearch && matchesStatus;
+    });
+
+    // Mettre à jour nextId
     if (inventaire.length > 0) {
         nextId = Math.max(...inventaire.map(p => p.id)) + 1;
     }
 
-    inventaire.forEach(produit => {
+    // 2. AFFICHAGE DES LIGNES FILTRÉES
+    inventaireFiltre.forEach(produit => {
         const row = tableBody.insertRow();
         row.setAttribute('data-id', produit.id); 
         
-        let statutClass = '';
-        let statutText = '';
-        if (produit.stock <= 0) {
-            statutClass = 'status-urgent';
-            statutText = 'Rupture';
-        } else if (produit.stock < 10) {
-            statutClass = 'status-low';
-            statutText = 'Stock Bas';
-        } else {
-            statutClass = 'status-ok';
-            statutText = 'Stock OK';
-        }
+        const { statutClass, statutText } = getStatut(produit.stock);
 
         row.insertCell().textContent = produit.nom;
         row.insertCell().textContent = produit.categorie;
@@ -164,7 +208,7 @@ function afficherInventaire() {
         
         const actionsCell = row.insertCell();
         actionsCell.innerHTML = `<button onclick="modifierProduit(${produit.id})">Modifier</button>
-                                 <button onclick="supprimerProduit(${produuit.id})" class="delete-btn">Supprimer</button>`;
+                                 <button onclick="supprimerProduit(${produit.id})" class="delete-btn">Supprimer</button>`;
     });
 }
 
@@ -223,5 +267,22 @@ if (addProductForm) {
     addProductForm.addEventListener('submit', ajouterProduit);
 }
 
+window.addEventListener('load', verifierAcces);
+
+// Écouteurs pour le FILTRAGE et la RECHERCHE
+document.getElementById('search-input')?.addEventListener('input', afficherInventaire);
+document.getElementById('filter-status')?.addEventListener('change', afficherInventaire);
+
+// Écouteurs pour le TRI (clic sur les entêtes de colonnes)
+const tableHeader = document.querySelector('#inventory-table thead tr');
+if (tableHeader) {
+    tableHeader.querySelectorAll('th').forEach((th, index) => {
+        // Ajouter un style de curseur pour indiquer que c'est triable
+        if (index < 3) { // Tri sur Nom, Catégorie, Stock
+            th.style.cursor = 'pointer';
+            th.addEventListener('click', () => trierTableau(index));
+        }
+    });
+}
 // Lancer la vérification de l'accès au chargement de la page
 window.addEventListener('load', verifierAcces);
