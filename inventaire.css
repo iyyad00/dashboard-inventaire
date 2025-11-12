@@ -54,14 +54,14 @@ header {
     padding: 12px;
     border: 1px solid #ddd;
     border-radius: 5px;
-    box-sizing: border-box; /* Inclure padding dans la largeur */
+    box-sizing: border-box; 
     font-size: 16px;
 }
 
 .login-container button {
     width: 100%;
     padding: 12px;
-    background-color: #3498db; /* Bleu vif pour le bouton */
+    background-color: #3498db; 
     color: white;
     border: none;
     border-radius: 5px;
@@ -78,10 +78,105 @@ header {
 .erreur-hidden {
     color: #e74c3c;
     margin-top: 15px;
-    visibility: hidden; /* Caché par défaut */
+    visibility: hidden; 
+}
+.hint {
+    margin-top: 20px;
+    font-size: 0.85em;
+    color: #777;
 }
 
-/* --- Styles pour le TABLEAU (index.html) --- */
+/* --- Styles pour l'INFORMATION D'ENTREPRISE (info-box) --- */
+.info-box {
+    background-color: #e6f7ff; 
+    border: 1px solid #91d5ff;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 30px;
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.info-box h3 {
+    margin: 0;
+    color: #0050b3;
+    font-size: 1.2em;
+}
+
+.info-box p {
+    margin: 5px 20px 5px 0; 
+    font-size: 0.95em;
+    flex-grow: 1; /* Permet aux paragraphes de prendre l'espace disponible */
+}
+
+.info-box button {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-left: 10px;
+    transition: background-color 0.2s;
+}
+
+.info-box button[onclick="deconnexion()"] {
+    background-color: #f5222d;
+    color: white;
+}
+.info-box button[onclick="deconnexion()"]:hover {
+    background-color: #a8071a;
+}
+.info-box button[onclick^="modifierEmailEntreprise"] {
+    background-color: #faad14;
+    color: #333;
+}
+.info-box button[onclick^="modifierEmailEntreprise"]:hover {
+    background-color: #d48806;
+    color: white;
+}
+
+
+/* --- Styles pour la Section AJOUTER UN PRODUIT (form-section) --- */
+.form-section {
+    background-color: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+#add-product-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto; /* 3 colonnes pour les inputs, 1 pour le bouton */
+    gap: 15px;
+    align-items: center;
+}
+
+#add-product-form input {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+}
+
+#add-product-form button[type="submit"] {
+    padding: 10px 20px;
+    background-color: #52c41a; 
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+#add-product-form button[type="submit"]:hover {
+    background-color: #389e0d;
+}
+
+/* --- Styles pour le TABLEAU (table-section) --- */
 .table-section h2, .form-section h2 {
     color: #2c3e50;
     border-bottom: 2px solid #ecf0f1;
@@ -114,29 +209,72 @@ table tbody tr:hover {
 }
 
 /* Statuts spécifiques */
-.status-ok {
-    background-color: #d4edda;
-    color: #155724;
+.status-ok, .status-low, .status-urgent {
     font-weight: bold;
     border-radius: 4px;
     padding: 5px 10px;
+    display: inline-block;
     text-align: center;
+    min-width: 80px;
+}
+
+.status-ok {
+    background-color: #d4edda;
+    color: #155724;
 }
 
 .status-low {
     background-color: #fff3cd;
     color: #856404;
-    font-weight: bold;
-    border-radius: 4px;
-    padding: 5px 10px;
-    text-align: center;
 }
 
 .status-urgent {
     background-color: #f8d7da;
     color: #721c24;
-    font-weight: bold;
+}
+
+/* Styles pour les boutons d'action dans le tableau */
+table button {
+    padding: 6px 10px;
+    border: none;
     border-radius: 4px;
-    padding: 5px 10px;
-    text-align: center;
+    cursor: pointer;
+    font-size: 0.9em;
+    margin-right: 5px;
+}
+
+table button[onclick^="modifierProduit"] {
+    background-color: #bae7ff;
+    color: #0050b3;
+}
+table button[onclick^="modifierProduit"]:hover {
+    background-color: #91d5ff;
+}
+
+.delete-btn {
+    background-color: #ffccc7; 
+    color: #a8071a; 
+}
+.delete-btn:hover {
+    background-color: #a8071a;
+    color: white;
+}
+
+
+/* Gestion du Responsive (mobile) */
+@media (max-width: 900px) {
+    #add-product-form {
+        grid-template-columns: 1fr; 
+    }
+    #add-product-form button[type="submit"] {
+        grid-column: 1 / 2;
+    }
+    .info-box {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .info-box button {
+        margin-top: 10px;
+        margin-left: 0;
+    }
 }
