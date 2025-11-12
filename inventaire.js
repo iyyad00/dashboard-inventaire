@@ -1,22 +1,18 @@
 // ====================================================================
 // SECTION 1: GESTION DES DONNÉES ET ESPACE DE STOCKAGE DÉSIGNÉ (Local)
-//
-// ATTENTION: Les données sont stockées sur l'appareil de l'utilisateur (localStorage).
-// C'est l'espace de stockage idéal pour ce projet de portfolio statique.
-// Pour un usage commercial réel (sécurité contre le piratage), il faudrait un
-// serveur externe et une base de données.
 // ====================================================================
 
 // Liste des codes d'entreprise, email et mots de passe autorisés
-const USERS_AUTORISES = {
+let USERS_AUTORISES = { // Utilisez 'let' car cette variable sera mise à jour
     "ENTR001": { motDePasse: "secret123", nom: "Société Alpha", email: "alpha@entreprise.ma" },
     "ENTR002": { motDePasse: "pass456", nom: "Atelier Beta", email: "beta@atelier.com" }
 };
 
-let nextId = 4; // ID pour les nouveaux produits
+let nextId = 4;
 
-// Fonction pour initialiser l'inventaire dans le LocalStorage (si vide)
+// Fonction pour initialiser l'inventaire et les utilisateurs
 function initialiserStockage() {
+    // 1. Initialiser l'inventaire
     if (!localStorage.getItem('inventaire')) {
         const inventaireInitial = [
             { id: 1, nom: "Clavier Mécanique", categorie: "Bureau", stock: 25 },
@@ -25,42 +21,71 @@ function initialiserStockage() {
         ];
         localStorage.setItem('inventaire', JSON.stringify(inventaireInitial));
     }
+
+    // 2. Initialiser les utilisateurs (Si des emails ont été modifiés par l'utilisateur)
+    const storedUsers = localStorage.getItem('users');
+    if (storedUsers) {
+        // Si des utilisateurs stockés existent, les fusionner avec la liste par défaut
+        USERS_AUTORISES = JSON.parse(storedUsers);
+    } else {
+        // Stocker la liste par défaut si elle n'existe pas encore
+        localStorage.setItem('users', JSON.stringify(USERS_AUTORISES));
+    }
 }
-initialiserStockage(); // Exécuter l'initialisation dès le début du script
+initialiserStockage();
+
 
 // ====================================================================
 // SECTION 2: CONTRÔLE D'ACCÈS ET AFFICHAGE (Vérifie la connexion en premier)
 // ====================================================================
 
-// Fonction pour vérifier la connexion et rediriger si l'accès est refusé
 function verifierAcces() {
-    // Si la page n'est pas censée afficher l'inventaire, on arrête
-    if (!document.getElementById('inventory-table')) return;
-    
+    if (!document.getElementById('inventory-table') && !document.getElementById('login-form')) return; // Vérification générale
+
     const code = localStorage.getItem('entrepriseCode');
     
-    // Si l'utilisateur n'est pas connecté, le renvoyer à la page de connexion
-    if (!code || !USERS_AUTORISES[code]) {
-        window.location.href = 'login.html';
-        return;
+    // Si on est sur la page d'inventaire (index.html)
+    if (document.getElementById('inventory-table')) {
+        if (!code || !USERS_AUTORISES[code]) {
+            window.location.href = 'login.html';
+            return;
+        }
+        afficherInfoEntreprise(code);
+        afficherInventaire();
     }
-    
-    // Si l'accès est vérifié, afficher les infos et l'inventaire
-    afficherInfoEntreprise(code);
-    afficherInventaire();
 }
 
 function afficherInfoEntreprise(code) {
     const infoDiv = document.getElementById('entreprise-info');
     const user = USERS_AUTORISES[code];
-    // Affichage des informations demandées
     infoDiv.innerHTML = `<div class="info-box">
                          <h3>Entreprise Connectée : ${user.nom}</h3>
                          <p>Code d'Entreprise : <strong>${code}</strong></p>
-                         <p>Email de Contact : <strong>${user.email}</strong></p>
+                         <p>Email de Contact : <strong id="current-email">${user.email}</strong> 
+                         <button onclick="modifierEmailEntreprise('${code}')">Modifier Email</button></p> 
                          <button onclick="deconnexion()">Déconnexion</button>
                          </div>`;
 }
+
+// NOUVELLE FONCTION: Permet à l'entreprise connectée de modifier son email
+function modifierEmailEntreprise(code) {
+    const user = USERS_AUTORISES[code];
+    const nouveauEmail = prompt(`Entrez le nouvel email pour ${user.nom} (Actuel: ${user.email}) :`);
+
+    if (nouveauEmail !== null && nouveauEmail.trim() !== "" && nouveauEmail.includes('@')) {
+        // 1. Mettre à jour dans l'objet en mémoire
+        USERS_AUTORISES[code].email = nouveauEmail.trim();
+
+        // 2. Mettre à jour dans le stockage local pour persistance
+        localStorage.setItem('users', JSON.stringify(USERS_AUTORISES));
+
+        // 3. Mettre à jour l'affichage immédiatement
+        afficherInfoEntreprise(code);
+    } else if (nouveauEmail !== null) {
+        alert("Email invalide. Veuillez entrer une adresse email correcte.");
+    }
+}
+
 
 function deconnexion() {
     localStorage.removeItem('entrepriseCode');
@@ -102,7 +127,6 @@ if (loginForm) {
 
 // ====================================================================
 // SECTION 4: GESTION DU TABLEAU ET DES ACTIONS (index.html)
-// (Ajouter, Modifier, Supprimer)
 // ====================================================================
 
 function afficherInventaire() {
@@ -113,7 +137,6 @@ function afficherInventaire() {
     if (inventaire.length > 0) {
         nextId = Math.max(...inventaire.map(p => p.id)) + 1;
     }
-
 
     inventaire.forEach(produit => {
         const row = tableBody.insertRow();
@@ -141,7 +164,7 @@ function afficherInventaire() {
         
         const actionsCell = row.insertCell();
         actionsCell.innerHTML = `<button onclick="modifierProduit(${produit.id})">Modifier</button>
-                                 <button onclick="supprimerProduit(${produit.id})" class="delete-btn">Supprimer</button>`;
+                                 <button onclick="supprimerProduit(${produuit.id})" class="delete-btn">Supprimer</button>`;
     });
 }
 
@@ -201,6 +224,4 @@ if (addProductForm) {
 }
 
 // Lancer la vérification de l'accès au chargement de la page
-if (document.getElementById('inventory-table') || document.getElementById('login-form')) {
-    window.addEventListener('load', verifierAcces);
-}
+window.addEventListener('load', verifierAcces);
