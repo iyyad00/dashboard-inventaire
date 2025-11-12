@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Connexion - Inventaire d'Entreprise</title>
+    <link rel="stylesheet" href="inventaire.css"> 
+</head>
+<body>
+    <div class="login-container">
+        <h2>Accès au Tableau de Bord</h2>
+        <form id="login-form">
+            <div class="input-group">
+                <label for="code_entreprise">Code d'Entreprise</label>
+                <input type="text" id="code_entreprise" required placeholder="Ex: ENTR001">
+            </div>
+            
+            <div class="input-group">
+                <label for="mot_de_passe">Mot de Passe</label>
+                <input type="password" id="mot_de_passe" required>
+            </div>
+            
+            <button type="submit">Se Connecter</button>
+            <p id="message-erreur" class="erreur-hidden">Code ou mot de passe incorrect.</p>
+        </form>
+    </div>
+
+    <script src="inventaire.js"></script>
+</body>
+</html>
