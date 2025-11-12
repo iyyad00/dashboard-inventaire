@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Tableau de Bord d'Inventaire</title>
+    <link rel="stylesheet" href="inventaire.css">
+</head>
+<body>
+    <header>
+        <h1>Tableau de Bord : Suivi des Stocks</h1>
+    </header>
+
+    <main class="container">
+        <div class="form-section">
+            <h2>Ajouter un Produit</h2>
+            <form id="add-product-form">
+                <input type="text" id="produit-nom" placeholder="Nom du produit" required>
+                <input type="number" id="produit-stock" placeholder="Quantité en stock" required>
+                <input type="text" id="produit-categorie" placeholder="Catégorie (Ex: Bureau, Atelier)">
+                <button type="submit">Ajouter</button>
+            </form>
+        </div>
+
+        <div class="table-section">
+            <h2>Inventaire Actuel</h2>
+            <table id="inventory-table">
+                <thead>
+                    <tr>
+                        <th>Nom du Produit</th>
+                        <th>Catégorie</th>
+                        <th>Stock Actuel</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr data-stock="25">
+                        <td>Clavier Mécanique</td>
+                        <td>Bureau</td>
+                        <td>25</td>
+                        <td class="status-ok">Stock OK</td>
+                    </tr>
+                    <tr data-stock="3">
+                        <td>Lampe LED</td>
+                        <td>Éclairage</td>
+                        <td>3</td>
+                        <td class="status-low">Stock Bas</td>
+                    </tr>
+                    <tr data-stock="0">
+                        <td>Cartouche d'encre</td>
+                        <td>Consommable</td>
+                        <td>0</td>
+                        <td class="status-urgent">Rupture</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <footer>
+        <p>Inventaire développé par Iyyad00</p>
+    </footer>
+
+    </body>
+</html>
