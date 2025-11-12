@@ -278,3 +278,25 @@ table button[onclick^="modifierProduit"]:hover {
         margin-left: 0;
     }
 }
+/* Styles pour la Section de Filtrage */
+.filter-section {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+#search-input {
+    flex-grow: 1; /* Prend le maximum d'espace */
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+}
+
+#filter-status {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+    min-width: 150px;
+}
